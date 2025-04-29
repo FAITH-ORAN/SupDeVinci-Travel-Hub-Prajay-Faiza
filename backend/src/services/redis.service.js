@@ -17,3 +17,11 @@ exports.cacheOffers = async (key, data, ttl = 60) => {
   const compressed = zlib.gzipSync(json).toString('base64')
   await redisClient.setEx(key, ttl, compressed)
 }
+
+exports.publishNewOffer = async (messageObj) => {
+  const channel = 'offers:new'
+  const message = JSON.stringify(messageObj)
+
+  await redisClient.publish(channel, message)
+  console.log(`📢 Published to ${channel}: ${message}`)
+}

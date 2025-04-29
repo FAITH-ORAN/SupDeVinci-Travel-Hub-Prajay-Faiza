@@ -1,5 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
-const redisClient = require('../config/redis');
+const redisClient = require('../config/redis.config');
 
 exports.login = async (req, res) => {
   try {

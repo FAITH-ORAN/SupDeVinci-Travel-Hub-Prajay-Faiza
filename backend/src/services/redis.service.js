@@ -25,3 +25,21 @@ exports.publishNewOffer = async (messageObj) => {
   await redisClient.publish(channel, message)
   console.log(`📢 Published to ${channel}: ${message}`)
 }
+
+exports.getCachedStats = async (key) => {
+  try {
+    const data = await redisClient.get(key)
+    return data ? JSON.parse(data) : null
+  } catch (err) {
+    console.error('Redis read error:', err)
+    return null
+  }
+}
+
+exports.cacheStats = async (key, data, ttl) => {
+  try {
+    await redisClient.set(key, JSON.stringify(data), { EX: ttl })
+  } catch (err) {
+    console.error('Redis write error:', err)
+  }
+}

@@ -78,10 +78,8 @@ exports.getOfferById = async (req, res) => {
 
     const { from, departDate, returnDate } = offer
 
-    // 🔍 Villes proches depuis Neo4j
     const nearbyCities = await getNearbyCityCodes(from, 3)
 
-    // ✈️ Offres dans ces villes aux mêmes dates, sauf elle-même
     const related = await findOffersByCitiesAndDates(
       nearbyCities,
       departDate,

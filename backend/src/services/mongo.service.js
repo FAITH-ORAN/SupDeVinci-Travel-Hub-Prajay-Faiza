@@ -13,3 +13,15 @@ exports.findOffers = async (from, to, limit, q) => {
 exports.findOfferById = async (id) => {
   return Offer.findById(id)
 }
+
+exports.findOffersByCitiesAndDates = async (cities, departDate, returnDate, excludeId) => {
+  return Offer.find({
+    from: { $in: cities },
+    departDate,
+    returnDate,
+    _id: { $ne: excludeId }
+  })
+    .select('_id')
+    .limit(3)
+    .lean();
+};

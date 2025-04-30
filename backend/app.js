@@ -10,7 +10,6 @@ app.use(express.json())
 app.use('/api', authRoute);
 app.use('/api', recoRoutes);
 app.use('/api', offersRoutes)
-app.use('/api', authRoutes)
 
 // ❌ Gestion des routes non trouvées (404)
 app.use((req, res, next) => {

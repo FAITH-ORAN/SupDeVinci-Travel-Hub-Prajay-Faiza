@@ -1,4 +1,3 @@
-require('dotenv').config()
 const app = require('./app')
 const connectMongo = require('./src/config/mongo.config')
 const redisClient = require('./src/config/redis.config')

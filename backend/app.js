@@ -2,7 +2,9 @@ const express = require('express')
 const app = express()
 const cors = require('cors')
 const offersRoutes = require('./src/routes/offers.routes')
-const authRoutes = require('./src/routes/authRoute')
+const recoRoutes = require('./src/routes/recoRoute');
+const authRoute = require('./src/routes/authRoute');
+const cors = require('cors')
 
 app.use(cors())
 app.use(express.json())
@@ -25,5 +27,7 @@ app.use((err, req, res, next) => {
     error: err.message || 'Internal Server Error',
   })
 })
+app.use('/api', authRoute);
+app.use('/api', recoRoutes);
 
 module.exports = app

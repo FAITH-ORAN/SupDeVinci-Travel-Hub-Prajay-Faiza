@@ -3,7 +3,8 @@ const {
   cacheOffers,
   publishNewOffer,
 } = require('../services/redis.service')
-const { findOffers, findOfferById } = require('../services/mongo.service')
+const { findOffers, findOfferById, findOffersByCitiesAndDates } = require('../services/mongo.service')
+const { getNearbyCityCodes } = require('../services/neo4j.service')
 const Offer = require('../models/offer.model')
 
 exports.getOffers = async (req, res) => {
@@ -47,18 +48,36 @@ exports.getOfferById = async (req, res) => {
   try {
     const cached = await getCachedOffers(key)
     if (cached) {
-      const duration = Date.now() - start
-      console.log(`📦 [CACHE HIT] - ${duration} ms`)
+      console.log(`📦 [CACHE HIT] - ${Date.now() - start} ms`)
       return res.json(cached)
     }
 
     const offer = await findOfferById(id)
     if (!offer) return res.status(404).json({ error: 'Offer not found' })
 
-    await cacheOffers(key, offer, 300) // TTL 300 sec
-    console.log(`🛢️ [CACHE MISS] - ${Date.now() - start} ms`)
+    const { from, departDate, returnDate } = offer
 
-    res.json(offer)
+    // 👇 Get 3 nearby city codes from Neo4j
+    const nearbyCities = await getNearbyCityCodes(from, 3)
+
+    // 👇 Get up to 3 offers in those cities, same dates, not the same ID
+    const related = await findOffersByCitiesAndDates(
+      nearbyCities,
+      departDate,
+      returnDate,
+      id
+    )
+
+    const relatedIds = related.map((o) => o._id.toString())
+
+    const enriched = {
+      ...offer.toObject(),
+      relatedOffers: relatedIds,
+    }
+
+    await cacheOffers(key, enriched, 300)
+    console.log(`🛢️ [CACHE MISS] - ${Date.now() - start} ms`)
+    res.json(enriched)
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Internal Server Error' })

@@ -29,3 +29,25 @@ exports.getRecommendedCities = async (city, k) => {
     await session.close();
   }
 };
+
+exports.getNearbyCityCodes = async (cityCode, limit = 3) => {
+  const session = getNeo4jSession();
+  const intLimit = Math.floor(Number(limit)) || 3;
+
+  const query = `
+    MATCH (c:City {code: $city})-[r:NEAR]->(n:City)
+    RETURN n.code AS code
+    ORDER BY r.weight DESC
+    LIMIT ${intLimit}
+  `;
+
+  try {
+    const result = await session.run(query, { city: cityCode });
+    return result.records.map(record => record.get('code'));
+  } catch (err) {
+    console.error('❌ Neo4j getNearbyCityCodes error:', err.message);
+    return [];
+  } finally {
+    await session.close();
+  }
+};

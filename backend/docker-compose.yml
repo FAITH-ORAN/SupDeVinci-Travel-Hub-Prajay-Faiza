@@ -1,10 +1,10 @@
-version: "3.8"
+version: '3.8'
 
 services:
   app:
     build: .
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       - PORT=3000
       - MONGO_URI=mongodb+srv://berrichif0717:U7M4nNF6JUoi0Kq9@cluster0.rfcqlso.mongodb.net/travel?retryWrites=true&w=majority

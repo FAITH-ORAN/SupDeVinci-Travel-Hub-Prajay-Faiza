@@ -3,7 +3,17 @@ const {
   cacheOffers,
   publishNewOffer,
 } = require('../services/redis.service')
-const { findOffers, findOfferById, findOffersByCitiesAndDates } = require('../services/mongo.service')
+const {
+  findOffers,
+  findOfferById,
+  findOffersByCitiesAndDates,
+} = require('../services/mongo.service')
+const {
+  httpRequestDurationMicroseconds,
+  cacheHits,
+  cacheMisses,
+} = require('../services/metrics.service')
+
 const { getNearbyCityCodes } = require('../services/neo4j.service')
 const Offer = require('../models/offer.model')
 
@@ -47,20 +57,31 @@ exports.getOfferById = async (req, res) => {
 
   try {
     const cached = await getCachedOffers(key)
+    const duration = Date.now() - start
+
     if (cached) {
-      console.log(`📦 [CACHE HIT] - ${Date.now() - start} ms`)
+      console.log(`📦 [CACHE HIT] - ${duration} ms`)
+      cacheHits.inc()
+      httpRequestDurationMicroseconds
+        .labels(req.method, '/api/offers/:id', 200)
+        .observe(duration)
       return res.json(cached)
     }
 
     const offer = await findOfferById(id)
-    if (!offer) return res.status(404).json({ error: 'Offer not found' })
+    if (!offer) {
+      httpRequestDurationMicroseconds
+        .labels(req.method, '/api/offers/:id', 404)
+        .observe(Date.now() - start)
+      return res.status(404).json({ error: 'Offer not found' })
+    }
 
     const { from, departDate, returnDate } = offer
 
-    // 👇 Get 3 nearby city codes from Neo4j
+    // 🔍 Villes proches depuis Neo4j
     const nearbyCities = await getNearbyCityCodes(from, 3)
 
-    // 👇 Get up to 3 offers in those cities, same dates, not the same ID
+    // ✈️ Offres dans ces villes aux mêmes dates, sauf elle-même
     const related = await findOffersByCitiesAndDates(
       nearbyCities,
       departDate,
@@ -75,11 +96,20 @@ exports.getOfferById = async (req, res) => {
       relatedOffers: relatedIds,
     }
 
-    await cacheOffers(key, enriched, 300)
+    await cacheOffers(key, enriched, 300) // TTL 5 minutes
     console.log(`🛢️ [CACHE MISS] - ${Date.now() - start} ms`)
+    cacheMisses.inc()
+
+    httpRequestDurationMicroseconds
+      .labels(req.method, '/api/offers/:id', 200)
+      .observe(Date.now() - start)
+
     res.json(enriched)
   } catch (err) {
     console.error(err)
+    httpRequestDurationMicroseconds
+      .labels(req.method, '/api/offers/:id', 500)
+      .observe(Date.now() - start)
     res.status(500).json({ error: 'Internal Server Error' })
   }
 }

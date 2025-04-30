@@ -6,8 +6,8 @@ Application polyglotte utilisant trois bases de données NoSQL (MongoDB, RedisDB
 
 Commencez par cloner ce repository sur votre machine locale :
 
-git clone https://github.com/FAITH-ORAN/SupDeVinci-Travel-Hub-Prajay-Faiza.git
-cd SupDeVinci-Travel-Hub-Prajay-Faiza
+- git clone https://github.com/FAITH-ORAN/SupDeVinci-Travel-Hub-Prajay-Faiza.git
+- cd SupDeVinci-Travel-Hub-Prajay-Faiza
 
 ## Prérequis
 
@@ -17,7 +17,7 @@ cd SupDeVinci-Travel-Hub-Prajay-Faiza
 
 1. Allez dans le dossier `backend` :
 
-   cd backend
+   - cd backend
 
 2. Lancez l'application avec Docker Compose :
    docker-compose up --build
